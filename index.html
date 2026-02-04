@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCM 푸시 알림 테스트</title>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .status-bar {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .status-item {
+            text-align: center;
+        }
+
+        .status-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .status-value {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .status-value.ok {
+            color: #28a745;
+        }
+
+        .status-value.error {
+            color: #dc3545;
+        }
+
+        .section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .section h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .step-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #555;
+            margin: 10px 0 5px;
+            font-size: 14px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            color: white;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        button:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .token-box {
+            background: #2d3748;
+            color: #48bb78;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            word-break: break-all;
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .guide {
+            background: #e7f3ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .guide h3 {
+            color: #0066cc;
+            margin-bottom: 15px;
+        }
+
+        .guide ol {
+            margin-left: 20px;
+        }
+
+        .guide li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .guide a {
+            color: #667eea;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .guide a:hover {
+            text-decoration: underline;
+        }
+
+        .notification-test {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .notification-test {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .logs {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+        }
+
+        .log-time {
+            color: #888;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 FCM 푸시 알림 테스트</h1>
+        <p class="subtitle">Firebase Cloud Messaging 완전 테스트 환경</p>
+
+        <!-- 상태 바 -->
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-label">Firebase</div>
+                <div class="status-value" id="firebaseStatus">❌ 미연결</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">알림 권한</div>
+                <div class="status-value" id="permissionStatus">❌ 없음</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Service Worker</div>
+                <div class="status-value" id="swStatus">❌ 미등록</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">FCM 토큰</div>
+                <div class="status-value" id="tokenStatus">❌ 없음</div>
+            </div>
+        </div>
+
+        <!-- 가이드 -->
+        <div class="guide">
+            <h3>📚 시작하기</h3>
+            <ol>
+                <li><a href="https://console.firebase.google.com/" target="_blank">Firebase Console</a>에서 프로젝트 생성</li>
+                <li>프로젝트 설정 → 웹 앱 추가 → 설정 복사</li>
+                <li>Cloud Messaging → 웹 푸시 인증서 생성</li>
+                <li>아래에 설정값 입력 후 테스트!</li>
+            </ol>
+        </div>
+
+        <!-- 1. Firebase 설정 -->
+        <div class="section">
+            <h2><span class="step-num">1</span> Firebase 설정</h2>
+            
+            <label>API Key:</label>
+            <input type="text" id="apiKey" placeholder="AIzaSyD...">
+            
+            <label>Project ID:</label>
+            <input type="text" id="projectId" placeholder="my-project">
+            
+            <label>Messaging Sender ID:</label>
+            <input type="text" id="senderId" placeholder="123456789012">
+            
+            <label>App ID:</label>
+            <input type="text" id="appId" placeholder="1:123:web:abc">
+            
+            <label>VAPID Key:</label>
+            <input type="text" id="vapidKey" placeholder="BK4b...">
+            
+            <button class="btn-primary" onclick="initFirebase()">🔧 Firebase 초기화</button>
+            <div id="initResult"></div>
+        </div>
+
+        <!-- 2. 권한 및 Service Worker -->
+        <div class="section">
+            <h2><span class="step-num">2</span> 알림 권한 및 Service Worker</h2>
+            
+            <button class="btn-primary" onclick="requestPermission()">🔔 알림 권한 요청</button>
+            <button class="btn-info" onclick="registerSW()">⚙️ Service Worker 등록</button>
+            <div id="permResult"></div>
+        </div>
+
+        <!-- 3. FCM 토큰 -->
+        <div class="section">
+            <h2><span class="step-num">3</span> FCM 토큰 받기</h2>
+            
+            <button class="btn-success" id="getTokenBtn" onclick="getToken()" disabled>
+                🎫 FCM 토큰 받기
+            </button>
+            <div id="tokenResult"></div>
+        </div>
+
+        <!-- 4. 알림 테스트 -->
+        <div class="section">
+            <h2><span class="step-num">4</span> 알림 테스트</h2>
+            
+            <label>제목:</label>
+            <input type="text" id="notifTitle" value="테스트 알림">
+            
+            <label>내용:</label>
+            <textarea id="notifBody">FCM 푸시 알림 테스트입니다! 🎉</textarea>
+            
+            <div class="notification-test">
+                <button class="btn-success" onclick="sendLocalNotification()">
+                    📤 로컬 알림 (권한만 필요)
+                </button>
+                <button class="btn-warning" onclick="testVibration()">
+                    📳 진동 테스트
+                </button>
+            </div>
+        </div>
+
+        <!-- 5. 로그 -->
+        <div class="section">
+            <h2><span class="step-num">5</span> 로그</h2>
+            <button class="btn-info" onclick="clearLogs()">🗑️ 로그 지우기</button>
+            <div class="logs" id="logs"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
+
+    <script src="app.js"></script>
+</body>
+</html>
