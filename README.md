@@ -7,8 +7,8 @@ Firebase Cloud Messaging을 테스트할 수 있는 완전한 웹 애플리케�
 ```
 fcm-test/
 ├── index.html              # 메인 페이지
-├── app.js                  # 앱 로직
 ├── firebase-messaging-sw.js # Service Worker
+├── app.js                  # 앱 로직
 ├── manifest.json           # PWA Manifest
 └── README.md              # 이 파일
 ```
