@@ -150,7 +150,7 @@ async function registerSW() {
             throw new Error('이 브라우저는 Service Worker를 지원하지 않습니다.');
         }
 
-        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        const registration = await navigator.serviceWorker.register('${location.pathname}/firebase-messaging-sw.js');
         addLog('Service Worker 등록 성공!', 'success');
         addLog(`Scope: ${registration.scope}`);
         
