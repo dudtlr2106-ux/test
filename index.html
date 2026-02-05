@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>FCM 테스트 페이지</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>🔔 FCM 테스트 페이지</h1>
+
+    <section id="status">
+        <p>🔎 현재 상태: <span id="connection">연결 안 됨</span></p>
+        <p>🔑 서비스 워커: <span id="sw">없음</span></p>
+    </section>
+
+    <section id="controls">
+        <button id="requestPermission">푸시 권한 요청</button>
+        <button id="sendTestMessage" disabled>테스트 메시지 전송</button>
+    </section>
+
+    <section id="log">
+        <h2>🖥️ 콘솔 로그</h2>
+        <pre id="logContent"></pre>
+    </section>
+
+    <!-- Firebase SDK (v9) -->
+    <script type="module">
+        // ==== 1️⃣ Firebase 설정 ====
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // ==== 2️⃣ Firebase 초기화 ====
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging.js";
+
+        const app = initializeApp(firebaseConfig);
+        const messaging = getMessaging(app);
+
+        // ==== 3️⃣ UI 업데이트 함수 ====
+        const $ = (id) => document.getElementById(id);
+        const log = (msg) => {
+            const el = $("#logContent");
+            el.textContent += msg + "\n";
+            el.scrollTop = el.scrollHeight;
+        };
+
+        // ==== 4️⃣ 푸시 권한 요청 ====
+        $("#requestPermission").addEventListener("click", async () => {
+            try {
+                const token = await getToken(messaging, {
+                    vapidKey: "YOUR_VAPID_KEY"   // Firebase 콘솔 > 인증 > VAPID 키
+                });
+                if (token) {
+                    $("#connection").textContent = "연결됨";
+                    $("#requestPermission").disabled = true;
+                    $("#sendTestMessage").disabled = false;
+                    log("✅ 푸시 토큰 발급: " + token);
+                } else {
+                    log("⚠️ 토큰이 발급되지 않았습니다.");
+                }
+            } catch (e) {
+                console.error(e);
+                log("❌ 오류: " + e.message);
+            }
+        });
+
+        // ==== 5️⃣ 테스트 메시지 전송 (버튼 클릭) ====
+        $("#sendTestMessage").addEventListener("click", async () => {
+            try {
+                // 여기서는 콘솔에서 curl 혹은 Postman 으로 전송하는 예시를 보여줍니다.
+                // 실제 전송은 Firebase 콘솔 > Cloud Messaging > New Campaign 에서 할 수 있습니다.
+                // 아래는 curl 예시 (터미널에 복사‑붙여넣기)
+                const curlCmd = `curl -X POST \\
+    -H "Authorization: key=${messaging.getMessagingSenderId()}" \\
+    -H "Content-Type: application/json" \\
+    -d '{"to":"${await getToken(messaging)}","notification":{"title":"FCM 테스트","body":"GitHub Pages 에서 보낸 푸시 알림입니다!"}}' \\
+    https://fcm.googleapis.com/v1/projects/${firebaseConfig.projectId}/messages/send`;
+
+                log("📨 테스트 메시지 전송 명령 (터미널에 복사 후 실행):");
+                log(curlCmd);
+            } catch (e) {
+                log("❌ 전송 중 오류: " + e.message);
+            }
+        });
+
+        // ==== 6️⃣ 수신된 푸시 알림 표시 ====
+        onMessage(messaging, (payload) => {
+            log("🔔 푸시 수신!");
+            log(`제목: ${payload.notification?.title}`);
+            log(`내용: ${payload.notification?.body}`);
+            if (payload.data) {
+                log("데이터: " + JSON.stringify(payload.data));
+            }
+        });
+
+        // ==== 7️⃣ 서비스 워커 등록 (옵션) ====
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("sw.js")
+                .then(() => $("#sw").textContent = "등록됨"))
+                .catch(err => {
+                    log("⚠️ 서비스 워커 등록 실패: " + err);
+                    $("#sw").textContent = "실패";
+                });
+        }
+    </script>
+</body>
+</html>
