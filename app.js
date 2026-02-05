@@ -146,7 +146,7 @@ async function registerSW() {
     addLog('Service Worker 등록 시작...');
 
     try {
-        if (!('serviceWorker' in navigator)) {
+        if (!('serviceWorker' in navigator)) {navigator.serviceWorker.register('${location.pathname}firebase-messaging-sw.js');    
             throw new Error('이 브라우저는 Service Worker를 지원하지 않습니다.');
         }
 
