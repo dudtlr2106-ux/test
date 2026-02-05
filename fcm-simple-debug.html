@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCM 간단 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .box {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+        }
+        .btn-test { background: #ff9800; }
+        .btn-primary { background: #2196F3; }
+        .btn-success { background: #4CAF50; }
+        button:active { transform: scale(0.98); }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .logs {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">🔔 FCM 간단 테스트</h1>
+
+    <!-- 0. 기본 테스트 -->
+    <div class="box">
+        <h2>0️⃣ 기본 작동 테스트</h2>
+        <button class="btn-test" onclick="test0()">클릭 테스트</button>
+        <div id="result0"></div>
+    </div>
+
+    <!-- 1. 환경 확인 -->
+    <div class="box">
+        <h2>1️⃣ 환경 확인</h2>
+        <button class="btn-test" onclick="test1()">환경 체크</button>
+        <div id="result1"></div>
+    </div>
+
+    <!-- 2. Firebase 설정 -->
+    <div class="box">
+        <h2>2️⃣ Firebase 설정</h2>
+        <label>API Key:</label>
+        <input type="text" id="apiKey" placeholder="AIzaSy...">
+        
+        <label>Project ID:</label>
+        <input type="text" id="projectId" placeholder="my-project">
+        
+        <label>Sender ID:</label>
+        <input type="text" id="senderId" placeholder="123456789">
+        
+        <label>App ID:</label>
+        <input type="text" id="appId" placeholder="1:123:web:abc">
+        
+        <label>VAPID Key:</label>
+        <input type="text" id="vapidKey" placeholder="BK4b...">
+        
+        <button class="btn-primary" onclick="test2()">Firebase 초기화</button>
+        <div id="result2"></div>
+    </div>
+
+    <!-- 3. 권한 -->
+    <div class="box">
+        <h2>3️⃣ 알림 권한</h2>
+        <button class="btn-primary" onclick="test3()">권한 요청</button>
+        <div id="result3"></div>
+    </div>
+
+    <!-- 4. 진동 -->
+    <div class="box">
+        <h2>4️⃣ 진동 테스트</h2>
+        <button class="btn-success" onclick="test4()">진동</button>
+        <div id="result4"></div>
+    </div>
+
+    <!-- 로그 -->
+    <div class="box">
+        <h2>📋 로그</h2>
+        <button class="btn-test" onclick="clearLog()">지우기</button>
+        <div class="logs" id="logs"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
+
+    <script>
+        let messaging = null;
+
+        function log(msg, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            const logsDiv = document.getElementById('logs');
+            const entry = document.createElement('div');
+            
+            let icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+            entry.textContent = `[${time}] ${icon} ${msg}`;
+            
+            logsDiv.insertBefore(entry, logsDiv.firstChild);
+            console.log(msg);
+        }
+
+        function clearLog() {
+            document.getElementById('logs').innerHTML = '';
+            log('로그 지움');
+        }
+
+        // 0. 기본 테스트
+        function test0() {
+            log('버튼 클릭 작동!', 'success');
+            document.getElementById('result0').innerHTML = 
+                '<div class="success">✅ JavaScript 정상 작동!</div>';
+            alert('✅ 버튼이 작동합니다!');
+        }
+
+        // 1. 환경 확인
+        function test1() {
+            log('환경 체크 시작...');
+            const result = document.getElementById('result1');
+            let html = '<div class="info">';
+            
+            // 프로토콜
+            html += `<strong>프로토콜:</strong> ${location.protocol}<br>`;
+            log(`프로토콜: ${location.protocol}`);
+            
+            // HTTPS 체크
+            if (location.protocol === 'https:' || location.hostname === 'localhost') {
+                html += '✅ HTTPS OK<br>';
+                log('HTTPS OK', 'success');
+            } else {
+                html += '❌ HTTPS 필요!<br>';
+                log('HTTPS 아님!', 'error');
+            }
+            
+            // Notification API
+            if ('Notification' in window) {
+                html += `✅ 알림 API 지원 (${Notification.permission})<br>`;
+                log(`알림 권한: ${Notification.permission}`);
+            } else {
+                html += '❌ 알림 API 미지원<br>';
+                log('알림 API 없음', 'error');
+            }
+            
+            // Service Worker
+            if ('serviceWorker' in navigator) {
+                html += '✅ Service Worker 지원<br>';
+                log('SW 지원', 'success');
+            } else {
+                html += '❌ Service Worker 미지원<br>';
+                log('SW 미지원', 'error');
+            }
+            
+            // Firebase
+            if (typeof firebase !== 'undefined') {
+                html += '✅ Firebase SDK 로드됨<br>';
+                log('Firebase SDK OK', 'success');
+            } else {
+                html += '❌ Firebase SDK 로드 안됨<br>';
+                log('Firebase SDK 없음', 'error');
+            }
+            
+            html += '</div>';
+            result.innerHTML = html;
+            log('환경 체크 완료');
+        }
+
+        // 2. Firebase 초기화
+        function test2() {
+            log('Firebase 초기화 시작...');
+            const result = document.getElementById('result2');
+            
+            try {
+                // Firebase 존재 확인
+                if (typeof firebase === 'undefined') {
+                    throw new Error('Firebase SDK가 로드되지 않았습니다! 인터넷 연결을 확인하세요.');
+                }
+                log('Firebase SDK 확인 OK');
+
+                // 입력값
+                const apiKey = document.getElementById('apiKey').value.trim();
+                const projectId = document.getElementById('projectId').value.trim();
+                const senderId = document.getElementById('senderId').value.trim();
+                const appId = document.getElementById('appId').value.trim();
+                const vapidKey = document.getElementById('vapidKey').value.trim();
+
+                if (!apiKey || !projectId || !senderId || !appId || !vapidKey) {
+                    throw new Error('모든 필드를 입력하세요!');
+                }
+                log('입력값 확인 OK');
+
+                // Config
+                const config = {
+                    apiKey: apiKey,
+                    authDomain: `${projectId}.firebaseapp.com`,
+                    projectId: projectId,
+                    storageBucket: `${projectId}.appspot.com`,
+                    messagingSenderId: senderId,
+                    appId: appId
+                };
+                log(`Project: ${projectId}`);
+
+                // 초기화
+                if (!firebase.apps || firebase.apps.length === 0) {
+                    firebase.initializeApp(config);
+                    log('Firebase 앱 초기화 완료', 'success');
+                } else {
+                    log('이미 초기화됨');
+                }
+
+                // Messaging
+                messaging = firebase.messaging();
+                log('Messaging 초기화 완료', 'success');
+
+                result.innerHTML = '<div class="success">✅ Firebase 초기화 성공!</div>';
+                alert('✅ Firebase 초기화 성공!');
+
+            } catch (error) {
+                log(`초기화 실패: ${error.message}`, 'error');
+                result.innerHTML = `<div class="error">❌ ${error.message}</div>`;
+                alert('❌ 실패: ' + error.message);
+            }
+        }
+
+        // 3. 권한
+        async function test3() {
+            log('권한 요청...');
+            const result = document.getElementById('result3');
+            
+            try {
+                if (!('Notification' in window)) {
+                    throw new Error('알림 API가 없습니다!');
+                }
+
+                log(`현재 권한: ${Notification.permission}`);
+                const permission = await Notification.requestPermission();
+                log(`결과: ${permission}`);
+
+                if (permission === 'granted') {
+                    result.innerHTML = '<div class="success">✅ 권한 허용!</div>';
+                    alert('✅ 권한 허용됨!');
+                } else {
+                    result.innerHTML = '<div class="error">❌ 권한 거부</div>';
+                    alert('❌ 권한이 거부되었습니다');
+                }
+
+            } catch (error) {
+                log(`권한 오류: ${error.message}`, 'error');
+                result.innerHTML = `<div class="error">❌ ${error.message}</div>`;
+            }
+        }
+
+        // 4. 진동
+        function test4() {
+            log('진동 테스트...');
+            const result = document.getElementById('result4');
+            
+            if (!('vibrate' in navigator)) {
+                log('진동 미지원', 'error');
+                result.innerHTML = '<div class="error">❌ 진동 미지원</div>';
+                return;
+            }
+
+            navigator.vibrate([300, 100, 300, 100, 300]);
+            log('진동 실행!', 'success');
+            result.innerHTML = '<div class="success">✅ 진동!</div>';
+            alert('✅ 진동이 실행되었습니다!');
+        }
+
+        // 페이지 로드
+        window.addEventListener('load', () => {
+            log('페이지 로드 완료');
+            log(`브라우저: ${navigator.userAgent.split(' ').pop()}`);
+            
+            setTimeout(() => {
+                if (typeof firebase === 'undefined') {
+                    log('⚠️ Firebase SDK 로드 실패!', 'error');
+                    alert('⚠️ Firebase SDK가 로드되지 않았습니다. 인터넷 연결을 확인하세요.');
+                } else {
+                    log('Firebase SDK 로드 완료', 'success');
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
